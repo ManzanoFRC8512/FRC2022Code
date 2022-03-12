@@ -106,19 +106,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     // arm control code. same as in teleop
-    if (this.armPosition == ArmPosition.UP) {
-      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_UP) {
-        arm.set(ARM_TRAVEL);
-      } else {
-        arm.set(ARM_HOLD_UP);
-      }
-    } else {
-      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_DOWN) {
-        arm.set(-ARM_TRAVEL);
-      } else {
-        arm.set(-ARM_HOLD_DOWN);
-      }
-    }
+    this.moveArm();
 
     // get time since start of auto
     double autoTimeElapsed = Timer.getFPGATimestamp() - autoStart;
@@ -175,19 +163,8 @@ public class Robot extends TimedRobot {
     }
 
     // Arm Controls
-    if (this.armPosition == UP) {
-      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_UP) {
-        arm.set(ARM_TRAVEL);
-      } else {
-        arm.set(ARM_HOLD_UP);
-      }
-    } else {
-      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_DOWN) {
-        arm.set(-ARM_TRAVEL);
-      } else {
-        arm.set(-ARM_HOLD_DOWN);
-      }
-    }
+    this.moveArm();
+
 
     if (armController.getRawButtonPressed(3) && this.armPosition == DOWN) {
       lastBurstTime = Timer.getFPGATimestamp();
@@ -210,5 +187,21 @@ public class Robot extends TimedRobot {
     driveRightB.set(0);
     arm.set(0);
     intake.set(ControlMode.PercentOutput, 0);
+  }
+
+  private void moveArm() {
+    if (this.armPosition == UP) {
+      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_UP) {
+        arm.set(ARM_TRAVEL);
+      } else {
+        arm.set(ARM_HOLD_UP);
+      }
+    } else {
+      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_DOWN) {
+        arm.set(-ARM_TRAVEL);
+      } else {
+        arm.set(-ARM_HOLD_DOWN);
+      }
+    }
   }
 }
