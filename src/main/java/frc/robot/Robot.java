@@ -188,8 +188,8 @@ public class Robot extends TimedRobot {
   }
 
   /**
-   * Sets the arm motor speed based on the current state of the robot and
-   * its controls.
+   * Given the currnet position of the arm, and the last time that the arm was
+   * instructed to move, determines the speed that the arm should move.
    */
   private static double getArmSpeed(ArmPosition armPosition, double lastBurstTime) {
     if (armPosition == UP) {
