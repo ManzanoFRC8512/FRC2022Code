@@ -17,14 +17,19 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Robot extends TimedRobot {
   
-  //Definitions for the hardware. Change this if you change what stuff you have plugged in
+  //
+  // Hardware definitions
+  //
+  // Change this if you change
+  // what stuff you have plugged in
+  //
   CANSparkMax driveLeftA = new CANSparkMax(1, MotorType.kBrushed);
   CANSparkMax driveLeftB = new CANSparkMax(2, MotorType.kBrushed);
   CANSparkMax driveRightA = new CANSparkMax(3, MotorType.kBrushed);
@@ -32,7 +37,8 @@ public class Robot extends TimedRobot {
   CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushless);
   VictorSPX intake = new VictorSPX(6);
 
-  Joystick driverController = new Joystick(0);
+  PS4Controller driverController = new PS4Controller(0);
+  PS4Controller armController = new PS4Controller(1);
 
   //Constants for controlling the arm. consider tuning these for your particular robot
   final double armHoldUp = 0.08;
@@ -138,11 +144,11 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     //Set up arcade steer
-    double forward = -driverController.getRawAxis(1);
-    double turn = -driverController.getRawAxis(2);
+    double leftDrive = -driverController.getLeftY();//.getRawAxis(1);
+    double rightDrive = -driverController.getRightY();//.getRawAxis(2);
     
-    double driveLeftPower = forward - turn;
-    double driveRightPower = forward + turn;
+    double driveLeftPower = leftDrive;
+    double driveRightPower = rightDrive;
 
     driveLeftA.set(driveLeftPower);
     driveLeftB.set(driveLeftPower);
@@ -150,10 +156,10 @@ public class Robot extends TimedRobot {
     driveRightB.set(driveRightPower);
 
     //Intake controls
-    if(driverController.getRawButton(5)){
+    if(armController.getRawButton(0)){
       intake.set(VictorSPXControlMode.PercentOutput, 1);;
     }
-    else if(driverController.getRawButton(7)){
+    else if(armController.getRawButton(2)){
       intake.set(VictorSPXControlMode.PercentOutput, -1);
     }
     else{
@@ -178,11 +184,11 @@ public class Robot extends TimedRobot {
       }
     }
   
-    if(driverController.getRawButtonPressed(6) && !armUp){
+    if(armController.getRawButtonPressed(3) && !armUp){
       lastBurstTime = Timer.getFPGATimestamp();
       armUp = true;
     }
-    else if(driverController.getRawButtonPressed(8) && armUp){
+    else if(armController.getRawButtonPressed(1) && armUp){
       lastBurstTime = Timer.getFPGATimestamp();
       armUp = false;
     }  
