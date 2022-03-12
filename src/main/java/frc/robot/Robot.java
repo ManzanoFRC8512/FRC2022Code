@@ -142,8 +142,8 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     // Set up arcade steer
-    double leftDrive = -driverController.getLeftY();// .getRawAxis(1);
-    double rightDrive = -driverController.getRightY();// .getRawAxis(2);
+    double leftDrive = -driverController.getLeftY();
+    double rightDrive = -driverController.getRightY();
 
     double driveLeftPower = leftDrive;
     double driveRightPower = rightDrive;
