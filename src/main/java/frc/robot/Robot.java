@@ -24,34 +24,47 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static frc.robot.ArmPosition.UP;
 import static frc.robot.ArmPosition.DOWN;
 
-public class Robot extends TimedRobot {
+/** Main robot code for the Manzano FRC team 8512's robot. */
+public final class Robot extends TimedRobot {
+
+  ///////////// Hardware configuration
+  //
+  // Motors
+  //
+
+  /** The front left drive motor. */
+  private final CANSparkMax driveLeftA = new CANSparkMax(1, MotorType.kBrushed);
+
+  /** The rear left drive motor. */
+  private final CANSparkMax driveLeftB = new CANSparkMax(2, MotorType.kBrushed);
+
+  /** The front right drive motor. */
+  private final CANSparkMax driveRightA = new CANSparkMax(3, MotorType.kBrushed);
+
+  /** The rear right drive motor. */
+  private final CANSparkMax driveRightB = new CANSparkMax(4, MotorType.kBrushed);
+
+  /** The arm motor, which lifts the arm up and down. */
+  private final CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushless);
+
+  /** The intake motor, which is used to input / output balls.*/
+  private final VictorSPX intake = new VictorSPX(6);
 
   //
-  // Hardware definitions
+  // Controllers
   //
-  // Change this if you change
-  // what stuff you have plugged in
-  //
-  CANSparkMax driveLeftA = new CANSparkMax(1, MotorType.kBrushed);
-  CANSparkMax driveLeftB = new CANSparkMax(2, MotorType.kBrushed);
-  CANSparkMax driveRightA = new CANSparkMax(3, MotorType.kBrushed);
-  CANSparkMax driveRightB = new CANSparkMax(4, MotorType.kBrushed);
-  CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushless);
-  VictorSPX intake = new VictorSPX(6);
 
-  PS4Controller driverController = new PS4Controller(0);
-  PS4Controller armController = new PS4Controller(1);
+  /**
+   * The controller used by the robot's driver. This is used to control the
+   * robot's position.
+   */
+  private final PS4Controller driverController = new PS4Controller(0);
 
-  // Constants for controlling the arm. consider tuning these for your particular
-  // robot
-  private static final double ARM_HOLD_UP = 0.08;
-  private static final double ARM_HOLD_DOWN = 0.13;
-  private static final double ARM_TRAVEL = 0.5;
-
-  private static final double ARM_TIME_UP = 0.5;
-  private static final double ARM_TIME_DOWN = 0.35;
-
-  // Varibles needed for the code
+  /**
+   * The controller used by the robot's arm operator. This is used to control
+   * the arm and the intake.
+   */
+  private final PS4Controller armController = new PS4Controller(1);
 
 
   /**
@@ -60,12 +73,17 @@ public class Robot extends TimedRobot {
    * This is initialized to "up", because that's how it would start a match.
    */
   ArmPosition armPosition = ArmPosition.UP;
-  boolean burstMode = false;
 
   /** The time at which the arm was instructed to change direction. */
   double lastBurstTime = 0;
 
+  /** The time at which autonomous operation was started. */
   double autoStart = 0;
+
+  /**
+   * Whether or not the robot will try to operate autonomously. This can be
+   * set via the SmartDashboard on the driver station before the match begins.
+   */
   boolean goForAuto = false;
 
   /**
@@ -186,6 +204,15 @@ public class Robot extends TimedRobot {
     arm.set(0);
     intake.set(ControlMode.PercentOutput, 0);
   }
+
+  // Constants for controlling the arm. consider tuning these for your
+  // particular robot
+  private static final double ARM_HOLD_UP = 0.08;
+  private static final double ARM_HOLD_DOWN = 0.13;
+  private static final double ARM_TRAVEL = 0.5;
+
+  private static final double ARM_TIME_UP = 0.5;
+  private static final double ARM_TIME_DOWN = 0.35;
 
   /**
    * Given the currnet position of the arm, and the last time that the arm was
