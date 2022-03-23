@@ -11,13 +11,13 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.PS4Controller;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -37,18 +37,25 @@ public final class Robot extends TimedRobot {
 
   /** The rear left drive motor. */
   private final CANSparkMax driveLeftB = new CANSparkMax(2, MotorType.kBrushed);
+  private final MotorControllerGroup driveLeft = new MotorControllerGroup(driveLeftA, driveLeftB);
 
   /** The front right drive motor. */
   private final CANSparkMax driveRightA = new CANSparkMax(3, MotorType.kBrushed);
 
   /** The rear right drive motor. */
   private final CANSparkMax driveRightB = new CANSparkMax(4, MotorType.kBrushed);
+  private final MotorControllerGroup driveRight = new MotorControllerGroup(driveRightA, driveRightB);
+
+  private final  DifferentialDrive driveBase = new DifferentialDrive(driveLeft, driveRight);
 
   /** The arm motor, which lifts the arm up and down. */
   private final CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushless);
 
   /** The intake motor, which is used to input / output balls.*/
-  private final VictorSPX intake = new VictorSPX(6);
+  private final CANSparkMax intake = new CANSparkMax(6, MotorType.kBrushed);
+
+  private final DigitalInput downSwitch = new DigitalInput(0);
+  private final DigitalInput upSwitch = new DigitalInput(1);
 
   //
   // Controllers
@@ -58,13 +65,13 @@ public final class Robot extends TimedRobot {
    * The controller used by the robot's driver. This is used to control the
    * robot's position.
    */
-  private final PS4Controller driverController = new PS4Controller(0);
+  private final XboxController driverController = new XboxController(0);
 
   /**
    * The controller used by the robot's arm operator. This is used to control
    * the arm and the intake.
    */
-  private final PS4Controller armController = new PS4Controller(1);
+  private final XboxController armController = new XboxController(1);
 
 
   /**
@@ -132,21 +139,15 @@ public final class Robot extends TimedRobot {
       // series of timed events making up the flow of auto
       if (autoTimeElapsed < 3) {
         // spit out the ball for three seconds
-        intake.set(ControlMode.PercentOutput, -1);
+        intake.set(-1);
       } else if (autoTimeElapsed < 6) {
         // stop spitting out the ball and drive backwards *slowly* for three seconds
-        intake.set(ControlMode.PercentOutput, 0);
-        driveLeftA.set(-0.3);
-        driveLeftB.set(-0.3);
-        driveRightA.set(-0.3);
-        driveRightB.set(-0.3);
+        intake.set(0);
+        driveBase.tankDrive(-0.3, -0.3);
       } else {
         // do nothing for the rest of auto
-        intake.set(ControlMode.PercentOutput, 0);
-        driveLeftA.set(0);
-        driveLeftB.set(0);
-        driveRightA.set(0);
-        driveRightB.set(0);
+        intake.set(0);
+        driveBase.tankDrive(0, 0);
       }
     }
   }
@@ -163,30 +164,24 @@ public final class Robot extends TimedRobot {
     double leftDrive = -driverController.getLeftY();
     double rightDrive = -driverController.getRightY();
 
-    double driveLeftPower = leftDrive;
-    double driveRightPower = rightDrive;
-
-    driveLeftA.set(driveLeftPower);
-    driveLeftB.set(driveLeftPower);
-    driveRightA.set(driveRightPower);
-    driveRightB.set(driveRightPower);
+    driveBase.tankDrive(leftDrive, rightDrive, driverController.getRightBumper());
 
     // Intake controls
-    if (armController.getRawButton(0)) {
-      intake.set(VictorSPXControlMode.PercentOutput, 1);
-    } else if (armController.getRawButton(2)) {
-      intake.set(VictorSPXControlMode.PercentOutput, -1);
+    if (armController.getAButton()) {
+      intake.set(1);
+    } else if (armController.getBButton()) {
+      intake.set(-1);
     } else {
-      intake.set(VictorSPXControlMode.PercentOutput, 0);
+      intake.set(0);
     }
 
     // Arm Controls
     this.arm.set(getArmSpeed(this.armPosition, this.lastBurstTime));
 
-    if (armController.getRawButtonPressed(3) && this.armPosition == DOWN) {
+    if (armController.getRightBumper() && this.armPosition == DOWN) {
       lastBurstTime = Timer.getFPGATimestamp();
       this.armPosition = UP;
-    } else if (armController.getRawButtonPressed(1) && this.armPosition == UP) {
+    } else if (armController.getLeftBumper() && this.armPosition == UP) {
       lastBurstTime = Timer.getFPGATimestamp();
       this.armPosition = DOWN;
     }
@@ -197,12 +192,9 @@ public final class Robot extends TimedRobot {
     // On disable turn off everything.
     // done to solve issue with motors "remembering" previous setpoints after
     // reenable
-    driveLeftA.set(0);
-    driveLeftB.set(0);
-    driveRightA.set(0);
-    driveRightB.set(0);
+    driveBase.tankDrive(0, 0);
     arm.set(0);
-    intake.set(ControlMode.PercentOutput, 0);
+    intake.set(0);
   }
 
   // Constants for controlling the arm. consider tuning these for your
@@ -218,15 +210,15 @@ public final class Robot extends TimedRobot {
    * Given the currnet position of the arm, and the last time that the arm was
    * instructed to move, determines the speed that the arm should move.
    */
-  private static double getArmSpeed(ArmPosition armPosition, double lastBurstTime) {
+  private double getArmSpeed(ArmPosition armPosition, double lastBurstTime) {
     if (armPosition == UP) {
-      if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_UP) {
+      if (!upSwitch.get() && Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_UP) {
         return ARM_TRAVEL;
       }
       return ARM_HOLD_UP;
     }
 
-    if (Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_DOWN) {
+    if (!downSwitch.get() && Timer.getFPGATimestamp() - lastBurstTime < ARM_TIME_DOWN) {
       return -ARM_TRAVEL;
     }
     return -ARM_HOLD_DOWN;
