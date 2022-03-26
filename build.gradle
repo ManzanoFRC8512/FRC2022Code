@@ -53,6 +53,13 @@ dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
 
+    // https://mvnrepository.com/artifact/com.google.inject/guice
+    implementation 'com.google.inject:guice:4.0'
+    // https://mvnrepository.com/artifact/com.google.inject.extensions/guice-multibindings
+    implementation 'com.google.inject.extensions:guice-multibindings:4.2.3'
+
+
+
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
 

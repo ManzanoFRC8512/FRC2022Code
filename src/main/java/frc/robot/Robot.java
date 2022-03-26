@@ -11,6 +11,8 @@
 
 package frc.robot;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -21,11 +23,23 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.controllers.Controller;
+import frc.robot.controllers.ControllersModule;
+
 import static frc.robot.ArmPosition.UP;
 import static frc.robot.ArmPosition.DOWN;
 
 /** Main robot code for the Manzano FRC team 8512's robot. */
 public final class Robot extends TimedRobot {
+  private final Controller[] controllers;
+
+  public Robot() {
+    Injector injector = Guice.createInjector(
+      new ControllersModule()
+    );
+
+    this.controllers = injector.getin
+  }
 
   ///////////// Hardware configuration
   //
@@ -37,6 +51,8 @@ public final class Robot extends TimedRobot {
 
   /** The rear left drive motor. */
   private final CANSparkMax driveLeftB = new CANSparkMax(2, MotorType.kBrushed);
+
+  /** The left motors, bound to a group. */
   private final MotorControllerGroup driveLeft = new MotorControllerGroup(driveLeftA, driveLeftB);
 
   /** The front right drive motor. */
@@ -53,7 +69,7 @@ public final class Robot extends TimedRobot {
 
   /** The intake motor, which is used to input / output balls.*/
   private final CANSparkMax intake = new CANSparkMax(6, MotorType.kBrushed);
-
+  /**down switch up switch */
   private final DigitalInput downSwitch = new DigitalInput(0);
   private final DigitalInput upSwitch = new DigitalInput(1);
 
@@ -109,10 +125,6 @@ public final class Robot extends TimedRobot {
     driveRightA.burnFlash();
     driveRightB.setInverted(false);
     driveRightB.burnFlash();
-
-    arm.setInverted(false);
-    arm.setIdleMode(IdleMode.kBrake);
-    arm.burnFlash();
 
     // add a thing on the dashboard to turn off auto if needed
     SmartDashboard.putBoolean("Go For Auto", false);
